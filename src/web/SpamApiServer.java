@@ -64,7 +64,7 @@ public class SpamApiServer {
     }
 
     public void start(int port) throws IOException {
-        HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
+        HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", port), 0);
         server.createContext("/api/classify", this::handleClassify);
         server.createContext("/api/train", this::handleTrain);
         server.createContext("/api/stats", this::handleStats);
