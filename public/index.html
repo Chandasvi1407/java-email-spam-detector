@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SentinelMail AI — Java Email Spam Detection</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Live Model Metrics Header -->
+    <header class="top-header">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+        </div>
+        <div>
+          <h1>SentinelMail AI</h1>
+          <p class="subtitle">Object-Oriented Java Spam Classifier &bull; Naive Bayes + Heuristic Ensemble</p>
+        </div>
+      </div>
+
+      <div class="metrics-strip" aria-label="Live Model Metrics">
+        <div class="metric-card">
+          <span class="metric-label">Vocabulary</span>
+          <strong class="metric-value" id="metric-vocab">--</strong>
+        </div>
+        <div class="metric-card metric-spam">
+          <span class="metric-label">Trained Spam</span>
+          <strong class="metric-value" id="metric-spam">--</strong>
+        </div>
+        <div class="metric-card metric-ham">
+          <span class="metric-label">Trained Ham</span>
+          <strong class="metric-value" id="metric-ham">--</strong>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Analyzed</span>
+          <strong class="metric-value" id="metric-analyzed">--</strong>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Dashboard Grid -->
+    <main class="dashboard-grid">
+      <!-- Left Column: Email Analyzer Panel -->
+      <section class="panel analyzer-panel" aria-labelledby="analyzer-heading">
+        <div class="panel-header">
+          <div>
+            <h2 id="analyzer-heading">Email Analyzer</h2>
+            <p class="panel-desc">Inspect any message using Statistical ML, Heuristic Rules, or Hybrid Ensemble.</p>
+          </div>
+          <div class="preset-actions">
+            <button type="button" class="btn btn-chip btn-chip-spam" id="btn-sample-spam">
+              Load Sample Spam
+            </button>
+            <button type="button" class="btn btn-chip btn-chip-ham" id="btn-sample-ham">
+              Load Sample Ham
+            </button>
+          </div>
+        </div>
+
+        <form id="analyze-form" class="analyzer-form" novalidate>
+          <div class="form-row-two">
+            <div class="field-group">
+              <label for="input-sender">Sender Address</label>
+              <input
+                id="input-sender"
+                type="text"
+                placeholder="e.g. security-alert@paypa1-verify.xyz"
+                autocomplete="off"
+              />
+            </div>
+
+            <div class="field-group">
+              <label for="select-model">Detection Model</label>
+              <select id="select-model">
+                <option value="ensemble" selected>Ensemble AI (NB + Heuristic)</option>
+                <option value="naive_bayes">Naive Bayes (Multinomial ML)</option>
+                <option value="heuristic">Heuristic Rules (Pattern Engine)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label for="input-subject">Subject Line</label>
+            <input
+              id="input-subject"
+              type="text"
+              placeholder="e.g. URGENT: Verify your account within 24 hours!!"
+              autocomplete="off"
+            />
+          </div>
+
+          <div class="field-group">
+            <label for="input-body">Email Body</label>
+            <textarea
+              id="input-body"
+              rows="8"
+              placeholder="Paste the full email content here..."
+            ></textarea>
+          </div>
+
+          <div class="form-footer">
+            <span class="shortcut-hint">Tip: Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to analyze</span>
+            <div class="form-buttons">
+              <button type="button" class="btn btn-ghost" id="btn-clear">Clear</button>
+              <button type="submit" class="btn btn-primary" id="btn-analyze">
+                <span class="btn-label">Analyze Email</span>
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <!-- Active Learning Bar -->
+        <div class="active-learning-bar" id="active-learning-bar">
+          <div class="al-copy">
+            <span class="al-title">Teach the AI (Active Learning)</span>
+            <span class="al-sub">Correct or reinforce the live Naive Bayes model in memory</span>
+          </div>
+          <div class="al-buttons">
+            <button type="button" class="btn btn-teach-spam" id="btn-teach-spam">
+              Mark as Spam
+            </button>
+            <button type="button" class="btn btn-teach-ham" id="btn-teach-ham">
+              Mark as Not Spam
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Result & Explainability + History -->
+      <div class="right-column">
+        <!-- Result & Explainability Card -->
+        <section class="panel result-panel" aria-labelledby="result-heading">
+          <div class="panel-header compact">
+            <h2 id="result-heading">Result &amp; Explainability</h2>
+            <span class="model-pill" id="result-model-badge">Ready</span>
+          </div>
+
+          <!-- Empty State -->
+          <div class="result-empty" id="result-empty">
+            <div class="empty-icon" aria-hidden="true">&#9993;</div>
+            <p>Load a sample or enter an email on the left to inspect its spam probability and trigger signals.</p>
+          </div>
+
+          <!-- Active Result State -->
+          <div class="result-content hidden" id="result-content">
+            <div class="verdict-row">
+              <span class="verdict-badge" id="verdict-badge">SPAM</span>
+              <div class="verdict-scores">
+                <span class="prob-big" id="prob-percent">0.0%</span>
+                <span class="prob-caption">Spam Probability</span>
+              </div>
+            </div>
+
+            <div class="meter-wrapper" aria-label="Spam probability meter">
+              <div class="meter-track">
+                <div class="meter-fill" id="meter-fill" style="width: 0%"></div>
+              </div>
+              <div class="meter-scale">
+                <span>0% Safe (HAM)</span>
+                <span>50% Threshold</span>
+                <span>100% SPAM</span>
+              </div>
+            </div>
+
+            <div class="signals-section">
+              <h3>Flagged Features &amp; Trigger Words</h3>
+              <ul class="signals-list" id="signals-list"></ul>
+            </div>
+
+            <div class="highlight-section">
+              <h3>Highlighted Content Inspection</h3>
+              <div class="highlighted-preview" id="highlighted-preview"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Scrollable History Log -->
+        <section class="panel history-panel" aria-labelledby="history-heading">
+          <div class="panel-header compact">
+            <h2 id="history-heading">Recent Classification Log</h2>
+            <span class="history-count" id="history-count">0 entries</span>
+          </div>
+          <div class="history-list" id="history-list">
+            <div class="history-empty">No emails analyzed in this session yet.</div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast hidden" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
